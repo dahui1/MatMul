@@ -1,3 +1,4 @@
 *.o
 benchmark-*
 job-*.*
+.DS_Store
