@@ -27,13 +27,33 @@ void add_dot_1x4(int lda, int stride, double* A, double* B, double* C)
   bcol1 = &B[lda];
   bcol2 = &B[lda*2];
   bcol3 = &B[lda*3];
-  for (int k=0; k<lda;k++)
+  for (int k=0; k<lda;k+=4)
   {
     A_row = A[k*stride];
     c0 += A_row * *bcol0++;
     c1 += A_row * *bcol1++;
     c2 += A_row * *bcol2++;
     c3 += A_row * *bcol3++;
+
+    A_row = A[k*(stride+1)];
+    c0 += A_row * *bcol0++;
+    c1 += A_row * *bcol1++;
+    c2 += A_row * *bcol2++;
+    c3 += A_row * *bcol3++;
+
+    A_row = A[k*(stride+2)];
+    c0 += A_row * *bcol0++;
+    c1 += A_row * *bcol1++;
+    c2 += A_row * *bcol2++;
+    c3 += A_row * *bcol3++;
+
+    A_row = A[k*(stride+3)];
+    c0 += A_row * *bcol0++;
+    c1 += A_row * *bcol1++;
+    c2 += A_row * *bcol2++;
+    c3 += A_row * *bcol3++;
+
+
   }
   C[0] += c0;
   C[lda] += c1;
