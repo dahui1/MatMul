@@ -11,8 +11,6 @@ void add_dot(int lda, int stride, double* A, double* B, double* C)
   }
 }
 
-
-
 // calculate 4 values of C, lying on a row
 void add_dot_1x4(int lda, int stride, double* A, double* B, double* C) 
 {
@@ -73,6 +71,33 @@ void add_dot_1x4(int lda, int stride, double* A, double* B, double* C)
   C[3*lda] += c3;
 }
 
+// compute 4 x 4 matrix of C
+void add_dot_4x4(int lda, int stride, double* A, double* B, double* C)
+{
+  // first row
+  add_dot(lda,stride,A,B,C);
+  add_dot(lda,stride,A,B+lda,C+lda);
+  add_dot(lda,stride,A,B+2*lda,C+2*lda);
+  add_dot(lda,stride,A,B+3*lda,C+3*lda);
+  // second row
+  add_dot(lda,stride,A+1,B,C+1);
+  add_dot(lda,stride,A+1,B+lda,C+1+lda);
+  add_dot(lda,stride,A+1,B+2*lda,C+1+2*lda);
+  add_dot(lda,stride,A+1,B+3*lda,C+1+3*lda);
+  // third row
+  add_dot(lda,stride,A+2,B,C+2);
+  add_dot(lda,stride,A+2,B+lda,C+2+lda);
+  add_dot(lda,stride,A+2,B+2*lda,C+2+2*lda);
+  add_dot(lda,stride,A+2,B+3*lda,C+2+3*lda);
+  // fourth row
+  add_dot(lda,stride,A+3,B,C+3);
+  add_dot(lda,stride,A+3,B+lda,C+3+lda);
+  add_dot(lda,stride,A+3,B+2*lda,C+3+2*lda);
+  add_dot(lda,stride,A+3,B+3*lda,C+3+3*lda);
+
+}
+
+
 /* This routine performs a dgemm operation
  *  C := C + A * B
  * where A, B, and C are lda-by-lda matrices stored in column-major format.
@@ -80,12 +105,26 @@ void add_dot_1x4(int lda, int stride, double* A, double* B, double* C)
 void square_dgemm (int lda, double* A, double* B, double* C)
 {
   /* For each column j of B */
-  for (int j = 0; j < lda; j+=4) // columns of C
+  for (int j = 0; j < lda/4*4; j+=4) // columns of C
   {
     /* For each row i of A */
-    for (int i = 0; i < lda; i ++) // rows of C
+    for (int i = 0; i < lda/4*4; i+=4) // rows of C
+    {
+      add_dot_4x4(lda,lda,A+i,B+j*lda,C+i+j*lda);
+    }
+    for (int i=lda/4*4; i<lda; i++) 
     {
       add_dot_1x4(lda,lda,A+i,B+j*lda,C+i+j*lda);
     }
   }
+  for (int j=lda/4*4; j<lda; j++)
+  {
+    for (int i=0;i<lda;i++)
+    {
+      add_dot(lda,lda,A+i,B+j*lda,C+i+j*lda);
+    }
+  }
 }
+
+
+
