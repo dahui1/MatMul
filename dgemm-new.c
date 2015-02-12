@@ -22,10 +22,26 @@ void add_dot(int lda, int stride, double* A, double* B, double* C)
 // calculate 4 values of C, lying on a row
 void add_dot_1x4(int lda, int stride, double* A, double* B, double* C) 
 {
-  add_dot(lda,stride,A,B,C);
-  add_dot(lda,stride,A,B+lda,C+lda);
-  add_dot(lda,stride,A,B+2*lda,C+2*lda);
-  add_dot(lda,stride,A,B+3*lda,C+3*lda);
+  //add_dot(lda,stride,A,B,C);
+  for (int k=0; k<lda;k++)
+  {
+    C[0] += A[k*stride] * B[k];
+  }
+  //add_dot(lda,stride,A,B+lda,C+lda);
+  for (int k=0; k<lda;k++)
+  {
+    C[lda] += A[k*stride] * B[lda+k];
+  }
+  //add_dot(lda,stride,A,B+2*lda,C+2*lda);
+  for (int k=0; k<lda;k++)
+  {
+    C[2*lda] += A[k*stride] * B[k+2*lda];
+  }
+  //add_dot(lda,stride,A,B+3*lda,C+3*lda;
+  for (int k=0; k<lda;k++)
+  {
+    C[3*lda] += A[k*stride] * B[k+3*lda];
+  }
 }
 
 /* This routine performs a dgemm operation
@@ -44,11 +60,4 @@ void square_dgemm (int lda, double* A, double* B, double* C)
       add_dot_1x4(lda,lda,A+i,B+j*lda,C+i+j*lda);
     }
   }
-  // for (int j=lda/4*4; j<lda; j++) // get odd columns of C
-  // {
-  //   for (int i=0; i<lda; i++)
-  //   {
-  //     add_dot(lda,lda,A+i,B+j*lda,C+i+j*lda);
-  //   }
-  // }
 }
