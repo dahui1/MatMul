@@ -16,8 +16,8 @@ void add_dot(int lda, int stride, double* A, double* B, double* C)
 // calculate 4 values of C, lying on a row
 void add_dot_1x4(int lda, int stride, double* A, double* B, double* C) 
 {
-  register double A_row;
-  register double c0, c1, c2, c3;
+  double A_row;
+  double c0, c1, c2, c3;
   c0 = 0.0;
   c1 = 0.0;
   c2 = 0.0;
