@@ -30,28 +30,33 @@ void add_dot_1x4(int lda, int stride, double* A, double* B, double* C)
   for (int k=0; k<lda/4*4;k+=4)
   {
     A_row = A[k*stride];
-    c0 += A_row * *bcol0++;
-    c1 += A_row * *bcol1++;
-    c2 += A_row * *bcol2++;
-    c3 += A_row * *bcol3++;
+    c0 += A_row * *(bcol0);
+    c1 += A_row * *(bcol1);
+    c2 += A_row * *(bcol2);
+    c3 += A_row * *(bcol3);
 
     A_row = A[(k+1)*stride];
-    c0 += A_row * *bcol0++;
-    c1 += A_row * *bcol1++;
-    c2 += A_row * *bcol2++;
-    c3 += A_row * *bcol3++;
+    c0 += A_row * *(bcol0+1);
+    c1 += A_row * *(bcol1+1);
+    c2 += A_row * *(bcol2+1);
+    c3 += A_row * *(bcol3+1);
 
     A_row = A[(k+2)*stride];
-    c0 += A_row * *bcol0++;
-    c1 += A_row * *bcol1++;
-    c2 += A_row * *bcol2++;
-    c3 += A_row * *bcol3++;
+    c0 += A_row * *(bcol0+2);
+    c1 += A_row * *(bcol1+2);
+    c2 += A_row * *(bcol2+2);
+    c3 += A_row * *(bcol3+2);
 
     A_row = A[(k+3)*stride];
-    c0 += A_row * *bcol0++;
-    c1 += A_row * *bcol1++;
-    c2 += A_row * *bcol2++;
-    c3 += A_row * *bcol3++;
+    c0 += A_row * *(bcol0+3);
+    c1 += A_row * *(bcol1+3);
+    c2 += A_row * *(bcol2+3);
+    c3 += A_row * *(bcol3+3);
+
+    bcol0+=4;
+    bcol1+=4;
+    bcol2+=4;
+    bcol3+=4;
 
   }
   for (int k=lda/4*4;k<lda;k++)
