@@ -20,26 +20,49 @@ void add_dot_4x4(int lda, int stride, double* A, double* B, double* C)
   //add_dot(lda,stride,A,B,C);
   for (int k=0; k<lda;k++)
   {
+    double a_row0, a_row1, a_row2, a_row3;
+    double c00, c01, c02, c03, c10, c11, c12, c13, c20, c21, c22, c23, c30, c31, c32, c33;
+    double *bcol0, *bcol1, *bcol2, *bcol3;
+
+    a_row0 = A[k*stride];
+    a_row1 = A[1+k*stride];
+    a_row2 = A[2+k*stride];
+    a_row3 = A[3+k*stride];
+
+    bcol0 = &B[k];
+    bcol1 = &B[lda+k];
+    bcol2 = &B[2*lda+k];
+    bcol3 = &B[3*lda+k];
+
+    c00 = 0.0;  c01 = 0.0; c02 = 0.0; c03 = 0.0;
+    c10 = 0.0;  c11 = 0.0; c12 = 0.0; c13 = 0.0;
+    c20 = 0.0;  c21 = 0.0; c22 = 0.0; c23 = 0.0;
+    c30 = 0.0;  c31 = 0.0; c32 = 0.0; c33 = 0.0;
     // first row
-    C[0] += A[k*stride] * B[k];
-    C[lda] += A[k*stride] * B[lda+k];
-    C[2*lda] += A[k*stride] * B[2*lda+k];
-    C[3*lda] += A[k*stride] * B[3*lda+k];
+    c00 += a_row0 * *bcol0;
+    c01 += a_row0 * *bcol1;
+    c02 += a_row0 * *bcol2;
+    c03 += a_row0 * *bcol3;
     // second row
-    C[1] += A[1+k*stride] * B[k];
-    C[1+lda] += A[1+k*stride] * B[lda+k];
-    C[1+2*lda] += A[1+k*stride] * B[2*lda+k];
-    C[1+3*lda] += A[1+k*stride] * B[3*lda+k];  
+    c10 += a_row1 * *bcol0;
+    c11 += a_row1 * *bcol1;
+    c12 += a_row1 * *bcol2;
+    c13 += a_row1 * *bcol3;  
     // third row
-    C[2] += A[2+k*stride] * B[k];
-    C[2+lda] += A[2+k*stride] * B[lda+k];
-    C[2+2*lda] += A[2+k*stride] * B[2*lda+k];
-    C[2+3*lda] += A[2+k*stride] * B[3*lda+k];
+    c20 += a_row2 * *bcol0;
+    c21 += a_row2 * *bcol1;
+    c22 += a_row2 * *bcol2;
+    c23 += a_row2 * *bcol3;
     // fourth row
-    C[3] += A[3+k*stride] * B[k];
-    C[3+lda] += A[3+k*stride] * B[lda+k];
-    C[3+2*lda] += A[3+k*stride] * B[2*lda+k];
-    C[3+3*lda] += A[3+k*stride] * B[3*lda+k];
+    c30 += a_row3 * *bcol0++;
+    c31 += a_row3 * *bcol1++;
+    c32 += a_row3 * *bcol2++;
+    c33 += a_row3 * *bcol3++;
+
+    C[0] += c00;  C[0+lda] += c01; C[0+2*lda] += c02; C[0+3*lda] += c03;
+    C[1] += c10;  C[1+lda] += c11; C[1+2*lda] += c12; C[1+3*lda] += c13;
+    C[2] += c20;  C[2+lda] += c21; C[2+2*lda] += c22; C[2+3*lda] += c23;
+    C[3] += c30;  C[3+lda] += c31; C[3+2*lda] += c23; C[3+3*lda] += c33;
   }
 
 }
