@@ -1,5 +1,10 @@
 #include <emmintrin.h>
 
+#define block1 128
+#define block2 256
+
+#define min(a,b) (((a)<(b))?(a):(b))
+
 const char* dgemm_desc = "tutorial based dgemm.";
 
 void add_dot_1x4(int, int, double*, double*, double*);
@@ -7,91 +12,129 @@ void add_dot_1x4(int, int, double*, double*, double*);
 // calculate 1 value of C with one row of A and one column of B
 void add_dot(int lda, int stride, double* A, double* B, double* C)
 {
-  for (int k=0; k<lda;k++)
+  for (int k=0; k<stride;k++)
   {
-    *C += A[k*stride] * B[k];
+    *C += A[k*lda] * B[k];
   }
 }
 
 // compute 4 x 4 matrix of C
 void add_dot_4x4(int lda, int stride, double* A, double* B, double* C)
 {
-  // first row
-  //add_dot(lda,stride,A,B,C);
-  for (int k=0; k<lda;k++)
+  __m128d a01, a23, b0, b1, b2, b3, c0, c1, c2, c3, c4, c5, c6, c7;
+  double *bcol0, *bcol1, *bcol2, *bcol3;
+
+  bcol0 = B;
+  bcol1 = B+1;
+  bcol2 = B+2;
+  bcol3 = B+3;
+  B+=4;
+
+  c0 = _mm_setzero_pd(); c1 = _mm_setzero_pd();
+  c2 = _mm_setzero_pd(); c3 = _mm_setzero_pd();
+  c4 = _mm_setzero_pd(); c5 = _mm_setzero_pd();
+  c6 = _mm_setzero_pd(); c7 = _mm_setzero_pd();
+
+  for (int k=0; k<stride;k++)
   {
-    double a_row0, a_row1, a_row2, a_row3;
-    double c00, c01, c02, c03, c10, c11, c12, c13, c20, c21, c22, c23, c30, c31, c32, c33;
-    double *bcol0, *bcol1, *bcol2, *bcol3;
 
-    a_row0 = A[k*stride];
-    a_row1 = A[1+k*stride];
-    a_row2 = A[2+k*stride];
-    a_row3 = A[3+k*stride];
+    a01 = _mm_loadu_pd(A);
+    a23 = _mm_loadu_pd(A+2);
+    A += 4;
 
-    bcol0 = &B[k];
-    bcol1 = &B[lda+k];
-    bcol2 = &B[2*lda+k];
-    bcol3 = &B[3*lda+k];
+    b0 = _mm_load1_pd(bcol0++);
+    b1 = _mm_load1_pd(bcol1++);
+    b2 = _mm_load1_pd(bcol2++);
+    b3 = _mm_load1_pd(bcol3++);
 
-    c00 = 0.0;  c01 = 0.0; c02 = 0.0; c03 = 0.0;
-    c10 = 0.0;  c11 = 0.0; c12 = 0.0; c13 = 0.0;
-    c20 = 0.0;  c21 = 0.0; c22 = 0.0; c23 = 0.0;
-    c30 = 0.0;  c31 = 0.0; c32 = 0.0; c33 = 0.0;
-    // first row
-    c00 += a_row0 * *bcol0;
-    c01 += a_row0 * *bcol1;
-    c02 += a_row0 * *bcol2;
-    c03 += a_row0 * *bcol3;
-    // second row
-    c10 += a_row1 * *bcol0;
-    c11 += a_row1 * *bcol1;
-    c12 += a_row1 * *bcol2;
-    c13 += a_row1 * *bcol3;  
-    // third row
-    c20 += a_row2 * *bcol0;
-    c21 += a_row2 * *bcol1;
-    c22 += a_row2 * *bcol2;
-    c23 += a_row2 * *bcol3;
-    // fourth row
-    c30 += a_row3 * *bcol0++;
-    c31 += a_row3 * *bcol1++;
-    c32 += a_row3 * *bcol2++;
-    c33 += a_row3 * *bcol3++;
-
-    C[0] += c00;  C[0+lda] += c01; C[0+2*lda] += c02; C[0+3*lda] += c03;
-    C[1] += c10;  C[1+lda] += c11; C[1+2*lda] += c12; C[1+3*lda] += c13;
-    C[2] += c20;  C[2+lda] += c21; C[2+2*lda] += c22; C[2+3*lda] += c23;
-    C[3] += c30;  C[3+lda] += c31; C[3+2*lda] += c23; C[3+3*lda] += c33;
+    c0 = _mm_add_pd(c0, _mm_mul_pd(a01,b0));
+    c1 = _mm_add_pd(c1, _mm_mul_pd(a01,b1));
+    c2 = _mm_add_pd(c2, _mm_mul_pd(a01,b2));
+    c3 = _mm_add_pd(c3, _mm_mul_pd(a01,b3));
+    c4 = _mm_add_pd(c4, _mm_mul_pd(a23, b0));
+    c5 = _mm_add_pd(c5, _mm_mul_pd(a23, b1));
+    c6 = _mm_add_pd(c6, _mm_mul_pd(a23, b2));
+    c7 = _mm_add_pd(c7, _mm_mul_pd(a23, b3));
   }
+
+  C[0] += c0[0]; C[1] += c0[1]; //c00, c10
+  C[lda] += c1[0]; C[1+lda] += c1[1]; //c01,c11
+  C[2*lda] += c2[0]; C[1+2*lda] += c2[1]; //c02,c12
+  C[3*lda] += c3[0]; C[1+3*lda] += c3[1]; //c03,c13
+
+  C[2] += c4[0]; C[3] += c4[1];
+  C[2+lda] += c5[0]; C[3+lda] += c5[1];
+  C[2+2*lda] += c6[0]; C[3+2*lda] += c6[1];
+  C[2+3*lda] += c7[0]; C[3+3*lda] += c7[1];
 
 }
 
 
-/* This routine performs a dgemm operation
- *  C := C + A * B
- * where A, B, and C are lda-by-lda matrices stored in column-major format.
- * On exit, A and B maintain their input values. */    
-void square_dgemm (int lda, double* A, double* B, double* C)
+void packB (int lda, int stride, double* B, double* myB)
 {
-  /* For each column j of B */
+  double *b0pntr = &B[0]; 
+  double *b1pntr = &B[lda]; 
+  double *b2pntr = &B[2*lda]; 
+  double *b3pntr = &B[3*lda];
+  for (int i=0; i<stride; i++)
+  {
+    *myB++ = *b0pntr++;
+    *myB++ = *b1pntr++;
+    *myB++ = *b2pntr++;
+    *myB++ = *b3pntr++;
+  }
+}
+
+void packA (int lda, int stride, double* A, double* myA)
+{
+  for (int j=0; j<stride; j++)
+  {
+    double* apntr = &A[j*lda];
+    *myA++ = *apntr;
+    *myA++ = *(apntr+1);
+    *myA++ = *(apntr+2);
+    *myA++ = *(apntr+3);
+  }
+}
+
+void subblock(int xblock, int yblock, int lda, double* A, double* B, double* C)
+{
+  double myA[yblock*xblock], myB[xblock*lda];
+    /* For each column j of B */
   for (int j = 0; j < lda/4*4; j+=4) // columns of C
   {
+    // PackMatrixB( k, &B( 0, j ), ldb, &packedB[ j*k ] );
+    packB(lda, xblock, &B[j*lda],&myB[j*xblock]);
     /* For each row i of A */
-    for (int i = 0; i < lda/4*4; i+=4) // rows of C
+    for (int i = 0; i < yblock/4*4; i+=4) // rows of C
     {
-      add_dot_4x4(lda,lda,A+i,B+j*lda,C+i+j*lda);
+      if (j == 0 ) packA(lda,xblock,&A[i],&myA[i*xblock]);
+      add_dot_4x4(lda,xblock,&myA[i*xblock],&myB[j*xblock],C+i+j*lda);
     }
-    for (int i=lda/4*4; i<lda; i++) 
+    for (int i=yblock/4*4; i<yblock; i++) 
     {
-      add_dot_1x4(lda,lda,A+i,B+j*lda,C+i+j*lda);
+      add_dot_1x4(lda,xblock,A+i,B+j*lda,C+i+j*lda);
     }
   }
   for (int j=lda/4*4; j<lda; j++)
   {
-    for (int i=0;i<lda;i++)
+    for (int i=0;i<yblock;i++)
     {
-      add_dot(lda,lda,A+i,B+j*lda,C+i+j*lda);
+      add_dot(lda,xblock,A+i,B+j*lda,C+i+j*lda);
+    }
+  }
+}
+
+// block2 x lda block of C, counting by block1s
+void square_dgemm (int lda, double* A, double* B, double* C)
+{
+  for (int x=0; x<lda; x += block1)
+  {
+    int xblock = min(block1,lda-x);
+    for (int y=0; y<lda; y += block2)
+    {
+      int yblock = min(block2,lda-y);
+      subblock(xblock,yblock,lda,A+y+x*lda,B+x,C+y);
     }
   }
 }
@@ -110,27 +153,27 @@ void add_dot_1x4(int lda, int stride, double* A, double* B, double* C)
   bcol1 = &B[lda];
   bcol2 = &B[lda*2];
   bcol3 = &B[lda*3];
-  for (int k=0; k<lda/4*4;k+=4)
+  for (int k=0; k<stride/4*4;k+=4)
   {
-    A_row = A[k*stride];
+    A_row = A[k*lda];
     c0 += A_row * *(bcol0);
     c1 += A_row * *(bcol1);
     c2 += A_row * *(bcol2);
     c3 += A_row * *(bcol3);
 
-    A_row = A[(k+1)*stride];
+    A_row = A[(k+1)*lda];
     c0 += A_row * *(bcol0+1);
     c1 += A_row * *(bcol1+1);
     c2 += A_row * *(bcol2+1);
     c3 += A_row * *(bcol3+1);
 
-    A_row = A[(k+2)*stride];
+    A_row = A[(k+2)*lda];
     c0 += A_row * *(bcol0+2);
     c1 += A_row * *(bcol1+2);
     c2 += A_row * *(bcol2+2);
     c3 += A_row * *(bcol3+2);
 
-    A_row = A[(k+3)*stride];
+    A_row = A[(k+3)*lda];
     c0 += A_row * *(bcol0+3);
     c1 += A_row * *(bcol1+3);
     c2 += A_row * *(bcol2+3);
@@ -142,9 +185,9 @@ void add_dot_1x4(int lda, int stride, double* A, double* B, double* C)
     bcol3+=4;
 
   }
-  for (int k=lda/4*4;k<lda;k++)
+  for (int k=stride/4*4;k<stride;k++)
   {
-    A_row = A[k*stride];
+    A_row = A[k*lda];
     c0 += A_row * *bcol0++;
     c1 += A_row * *bcol1++;
     c2 += A_row * *bcol2++;
