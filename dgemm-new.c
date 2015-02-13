@@ -43,56 +43,56 @@ void add_dot_products(int k, int size, double* a, double* b, double* c)
     bp2v = _mm_load1_pd((double*) bp2++);
     bp3v = _mm_load1_pd((double*) bp3++);
 
-    c0010 += a01_0 * bp0v;
-    c0111 += a01_0 * bp1v;
-    c0212 += a01_0 * bp2v;
-    c0313 += a01_0 * bp3v;
-    c2030 += a23_0 * bp0v;
-    c2131 += a23_0 * bp1v;
-    c2232 += a23_0 * bp2v;
-    c2333 += a23_0 * bp3v;
+    c0010 += _mm_mul_pd(a01_0, bp0v);
+    c0111 += _mm_mul_pd(a01_0, bp1v);
+    c0212 += _mm_mul_pd(a01_0, bp2v);
+    c0313 += _mm_mul_pd(a01_0, bp3v);
+    c2030 += _mm_mul_pd(a23_0, bp0v);
+    c2131 += _mm_mul_pd(a23_0, bp1v);
+    c2232 += _mm_mul_pd(a23_0, bp2v);
+    c2333 += _mm_mul_pd(a23_0, bp3v);
 
     bp0v = _mm_loaddup_pd((double*) bp0++);
     bp1v = _mm_loaddup_pd((double*) bp1++);
     bp2v = _mm_loaddup_pd((double*) bp2++);
     bp3v = _mm_loaddup_pd((double*) bp3++);
 
-    c0010 += a01_1 * bp0v;
-    c0111 += a01_1 * bp1v;
-    c0212 += a01_1 * bp2v;
-    c0313 += a01_1 * bp3v;
-    c2030 += a23_1 * bp0v;
-    c2131 += a23_1 * bp1v;
-    c2232 += a23_1 * bp2v;
-    c2333 += a23_1 * bp3v;
+    c0010 += _mm_mul_pd(a01_1, bp0v);
+    c0111 += _mm_mul_pd(a01_1, bp1v);
+    c0212 += _mm_mul_pd(a01_1, bp2v);
+    c0313 += _mm_mul_pd(a01_1, bp3v);
+    c2030 += _mm_mul_pd(a23_1, bp0v);
+    c2131 += _mm_mul_pd(a23_1, bp1v);
+    c2232 += _mm_mul_pd(a23_1, bp2v);
+    c2333 += _mm_mul_pd(a23_1, bp3v);
 
     bp0v = _mm_loaddup_pd((double*) bp0++);
     bp1v = _mm_loaddup_pd((double*) bp1++);
     bp2v = _mm_loaddup_pd((double*) bp2++);
     bp3v = _mm_loaddup_pd((double*) bp3++);
 
-    c0010 += a01_2 * bp0v;
-    c0111 += a01_2 * bp1v;
-    c0212 += a01_2 * bp2v;
-    c0313 += a01_2 * bp3v;
-    c2030 += a23_2 * bp0v;
-    c2131 += a23_2 * bp1v;
-    c2232 += a23_2 * bp2v;
-    c2333 += a23_2 * bp3v;
+    c0010 += _mm_mul_pd(a01_2, bp0v);
+    c0111 += _mm_mul_pd(a01_2, bp1v);
+    c0212 += _mm_mul_pd(a01_2, bp2v);
+    c0313 += _mm_mul_pd(a01_2, bp3v);
+    c2030 += _mm_mul_pd(a23_2, bp0v);
+    c2131 += _mm_mul_pd(a23_2, bp1v);
+    c2232 += _mm_mul_pd(a23_2, bp2v);
+    c2333 += _mm_mul_pd(a23_2, bp3v);
 
     bp0v = _mm_loaddup_pd((double*) bp0++);
     bp1v = _mm_loaddup_pd((double*) bp1++);
     bp2v = _mm_loaddup_pd((double*) bp2++);
     bp3v = _mm_loaddup_pd((double*) bp3++);
 
-    c0010 += a01_3 * bp0v;
-    c0111 += a01_3 * bp1v;
-    c0212 += a01_3 * bp2v;
-    c0313 += a01_3 * bp3v;
-    c2030 += a23_3 * bp0v;
-    c2131 += a23_3 * bp1v;
-    c2232 += a23_3 * bp2v;
-    c2333 += a23_3 * bp3v;
+    c0010 += _mm_mul_pd(a01_3, bp0v);
+    c0111 += _mm_mul_pd(a01_3, bp1v);
+    c0212 += _mm_mul_pd(a01_3, bp2v);
+    c0313 += _mm_mul_pd(a01_3, bp3v);
+    c2030 += _mm_mul_pd(a23_3, bp0v);
+    c2131 += _mm_mul_pd(a23_3, bp1v);
+    c2232 += _mm_mul_pd(a23_3, bp2v);
+    c2333 += _mm_mul_pd(a23_3, bp3v);
   }
   
   c[0] += c0010[0], c[size] += c0111[0], c[2 * size] += c0212[0], c[3 * size] += c0313[0];
@@ -103,20 +103,19 @@ void add_dot_products(int k, int size, double* a, double* b, double* c)
 
 void PackMatrixA( int k, double *a, int lda, double *a_to )
 {
-  int j;
-
-  for( j=0; j<k; j++){  /* loop over columns of A */
+  for(int j = 0; j < k; j++){  /* loop over columns of A */
     double *a_ij_pntr = &a[j * lda];
 
     *a_to++ = *a_ij_pntr;
-    *a_to++ = *(a_ij_pntr+1);
-    *a_to++ = *(a_ij_pntr+2);
-    *a_to++ = *(a_ij_pntr+3);
+    *a_to++ = *(a_ij_pntr + 1);
+    *a_to++ = *(a_ij_pntr + 2);
+    *a_to++ = *(a_ij_pntr + 3);
   }
 }
 
 void square_dgemm (int n, double* A, double* B, double* C)
 {
+  // Padding the matrices
   int n4 = n;
   if (n4 % 4 != 0) {
     n4 = n - n4 % 4 + 4;
@@ -134,6 +133,7 @@ void square_dgemm (int n, double* A, double* B, double* C)
     memcpy(newC + i * n4, C + i * n, n * sizeof(double));
   }
 
+  // Blocking size
   int kc = 32, mc = 64;
   int xb, yb;
 
@@ -151,8 +151,8 @@ void square_dgemm (int n, double* A, double* B, double* C)
       for (int j = 0; j < n4; j += 4)
         for (int i = 0; i < yb; i += 4) 
         {
-          if (j == 0) PackMatrixA(xb, &newA[i + y + x * n4], n4, &packedA[ i*xb ] );
-          add_dot_products(xb, n4, &packedA[ i*xb ], &newB[x + j * n4], &newC[i + y + j * n4]);
+          if (j == 0) PackMatrixA(xb, &newA[i + y + x * n4], n4, &packedA[i * xb] );
+          add_dot_products(xb, n4, &packedA[i * xb], &newB[x + j * n4], &newC[i + y + j * n4]);
         }
 
     }
