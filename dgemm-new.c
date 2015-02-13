@@ -98,12 +98,10 @@ void packA (int lda, int stride, double* A, double* myA)
 
 void subblock(int xblock, int yblock, int lda, double* A, double* B, double* C)
 {
-  double myA[yblock*xblock], myB[xblock*lda];
+  double myA[yblock*xblock];
     /* For each column j of B */
   for (int j = 0; j < lda/4*4; j+=4) // columns of C
   {
-    // PackMatrixB( k, &B( 0, j ), ldb, &packedB[ j*k ] );
-    //packB(lda, xblock, &B[j*lda],&myB[j*xblock]);
     /* For each row i of A */
     for (int i = 0; i < yblock/4*4; i+=4) // rows of C
     {
