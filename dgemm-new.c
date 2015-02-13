@@ -103,7 +103,8 @@ void add_dot_products(int k, int size, double* a, double* b, double* c)
 
 void PackMatrixA( int k, double *a, int lda, double *a_to )
 {
-  for(int j = 0; j < k; j++){  /* loop over columns of A */
+  for(int j = 0; j < k; j++)
+  {
     double *a_ij_pntr = &a[j * lda];
 
     *a_to++ = *a_ij_pntr;
@@ -127,7 +128,8 @@ void square_dgemm (int n, double* A, double* B, double* C)
   double* newB = newA + n4 * n4;
   double* newC = newB + n4 * n4;  
 
-  for(int i = 0; i < n; i++){
+  for(int i = 0; i < n; i++)
+  {
     memcpy(newA + i * n4, A + i * n, n * sizeof(double));
     memcpy(newB + i * n4, B + i * n, n * sizeof(double));
     memcpy(newC + i * n4, C + i * n, n * sizeof(double));
@@ -147,18 +149,20 @@ void square_dgemm (int n, double* A, double* B, double* C)
       yb = n4 - y < mc ? n4 - y : mc;
       if (yb % 4 != 0)
         yb = yb - yb % 4 + 4;
-      double packedA[ yb * xb ];
+      double packedA[yb * xb];
       for (int j = 0; j < n4; j += 4)
         for (int i = 0; i < yb; i += 4) 
         {
-          if (j == 0) PackMatrixA(xb, &newA[i + y + x * n4], n4, &packedA[i * xb] );
+          if (j == 0) 
+            PackMatrixA(xb, &newA[i + y + x * n4], n4, &packedA[i * xb]);
           add_dot_products(xb, n4, &packedA[i * xb], &newB[x + j * n4], &newC[i + y + j * n4]);
         }
 
     }
   }
 
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++) 
+  {
     memcpy(C + i * n, newC + i * n4, n * sizeof(double));
   }
 } 
