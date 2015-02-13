@@ -24,11 +24,10 @@ void add_dot_4x4(int lda, int stride, double* A, double* B, double* C)
   __m128d a01, a23, b0, b1, b2, b3, c0, c1, c2, c3, c4, c5, c6, c7;
   double *bcol0, *bcol1, *bcol2, *bcol3;
 
-  bcol0 = B;
-  bcol1 = B+1;
-  bcol2 = B+2;
-  bcol3 = B+3;
-  B+=4;
+  bcol0 = &B[0];
+  bcol1 = &B[lda];
+  bcol2 = &B[lda*2];
+  bcol3 = &B[lda*3];
 
   c0 = _mm_setzero_pd(); c1 = _mm_setzero_pd();
   c2 = _mm_setzero_pd(); c3 = _mm_setzero_pd();
@@ -104,12 +103,12 @@ void subblock(int xblock, int yblock, int lda, double* A, double* B, double* C)
   for (int j = 0; j < lda/4*4; j+=4) // columns of C
   {
     // PackMatrixB( k, &B( 0, j ), ldb, &packedB[ j*k ] );
-    packB(lda, xblock, &B[j*lda],&myB[j*xblock]);
+    //packB(lda, xblock, &B[j*lda],&myB[j*xblock]);
     /* For each row i of A */
     for (int i = 0; i < yblock/4*4; i+=4) // rows of C
     {
       if (j == 0 ) packA(lda,xblock,&A[i],&myA[i*xblock]);
-      add_dot_4x4(lda,xblock,&myA[i*xblock],&myB[j*xblock],C+i+j*lda);
+      add_dot_4x4(lda,xblock,&myA[i*xblock],B+j*lda,C+i+j*lda);
     }
     for (int i=yblock/4*4; i<yblock; i++) 
     {
