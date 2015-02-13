@@ -101,12 +101,14 @@ void add_dot_products(int k, int size, double* a, double* b, double* c)
   c[3] += c2030[1], c[size + 3] += c2131[1], c[2 * size + 3] += c2232[1], c[3 * size + 3] += c2333[1];
 }
 
+// Pack A for faster access, as the storage of A isn't continuous
 void PackMatrixA( int k, double *a, int lda, double *a_to )
 {
   for(int j = 0; j < k; j++)
   {
     double *a_ij_pntr = &a[j * lda];
-
+    
+    // As we choose a step of 4
     *a_to++ = *a_ij_pntr;
     *a_to++ = *(a_ij_pntr + 1);
     *a_to++ = *(a_ij_pntr + 2);
@@ -122,7 +124,7 @@ void square_dgemm (int n, double* A, double* B, double* C)
     n4 = n - n4 % 4 + 4;
   }
 
-  double* buf = (double*) calloc (3 * n4 * n4, sizeof(double));
+  double* buf = (double*) malloc (3 * n4 * n4, sizeof(double));
 
   double* newA = buf + 0;
   double* newB = newA + n4 * n4;
@@ -135,8 +137,8 @@ void square_dgemm (int n, double* A, double* B, double* C)
     memcpy(newC + i * n4, C + i * n, n * sizeof(double));
   }
 
-  // Blocking size
-  int kc = 32, mc = 64;
+  // Blocking sizes
+  int kc = 64, mc = 64;
   int xb, yb;
 
   for (int x = 0; x < n4; x += kc)
@@ -157,7 +159,6 @@ void square_dgemm (int n, double* A, double* B, double* C)
             PackMatrixA(xb, &newA[i + y + x * n4], n4, &packedA[i * xb]);
           add_dot_products(xb, n4, &packedA[i * xb], &newB[x + j * n4], &newC[i + y + j * n4]);
         }
-
     }
   }
 
