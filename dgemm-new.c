@@ -4,7 +4,7 @@ const char* dgemm_desc = "New dgemm.";
 #include <string.h>
 #include <immintrin.h>
 
-void add_dot_products(int k, double* a, double* b, double* c)
+void add_dot_products(int k, int size, double* a, double* b, double* c)
 {
   __m128d c0010, c0111, c0212, c0313, c2030, c2131, c2232, c2333;
 
@@ -17,26 +17,31 @@ void add_dot_products(int k, double* a, double* b, double* c)
   c2232 = _mm_setzero_pd();
   c2333 = _mm_setzero_pd();
 
-  double* bp0 = &b[0];
-  double* bp1 = &b[k];
-  double* bp2 = &b[2 * k];
-  double* bp3 = &b[3 * k];
+  double* bp0, * bp1, * bp2, * bp3;
+  bp0 = &b[0];
+  bp1 = &b[size];
+  bp2 = &b[2 * size];
+  bp3 = &b[3 * size];
+
+  __m128d bp0v, bp1v, bp2v, bp3v;
 
   for (int p = 0; p < k; p += 4)
   {
-    __m128d a01_0 = _mm_load_pd((double*) &a[p * k]);
-    __m128d a23_0 = _mm_load_pd((double*) &a[p * k + 2]);
-    __m128d a01_1 = _mm_load_pd((double*) &a[(p + 1) * k]);
-    __m128d a23_1 = _mm_load_pd((double*) &a[(p + 1) * k + 2]);
-    __m128d a01_2 = _mm_load_pd((double*) &a[(p + 2)* k]);
-    __m128d a23_2 = _mm_load_pd((double*) &a[(p + 2) * k + 2]);
-    __m128d a01_3 = _mm_load_pd((double*) &a[(p + 3) * k]);
-    __m128d a23_3 = _mm_load_pd((double*) &a[(p + 3) * k + 2]);        
+    __m128d a01_0, a23_0, a01_1, a23_1, a01_2, a23_2, a01_3, a23_3;
+    a01_0 = _mm_load_pd((double*) a);
+    a23_0 = _mm_load_pd((double*) (a + 2)); 
+    a01_1 = _mm_load_pd((double*) (a + 4));
+    a23_1 = _mm_load_pd((double*) (a + 6));
+    a01_2 = _mm_load_pd((double*) (a + 8));
+    a23_2 = _mm_load_pd((double*) (a + 10));
+    a01_3 = _mm_load_pd((double*) (a + 12));
+    a23_3 = _mm_load_pd((double*) (a + 14));  
+    a += 16;
 
-    __m128d bp0v = _mm_loaddup_pd((double*) bp0++);
-    __m128d bp1v = _mm_loaddup_pd((double*) bp1++);
-    __m128d bp2v = _mm_loaddup_pd((double*) bp2++);
-    __m128d bp3v = _mm_loaddup_pd((double*) bp3++);
+    bp0v = _mm_load1_pd((double*) bp0++);
+    bp1v = _mm_load1_pd((double*) bp1++);
+    bp2v = _mm_load1_pd((double*) bp2++);
+    bp3v = _mm_load1_pd((double*) bp3++);
 
     c0010 += a01_0 * bp0v;
     c0111 += a01_0 * bp1v;
@@ -88,14 +93,28 @@ void add_dot_products(int k, double* a, double* b, double* c)
     c2131 += a23_3 * bp1v;
     c2232 += a23_3 * bp2v;
     c2333 += a23_3 * bp3v;
- }
+  }
   
-  c[0] += c0010[0], c[k] += c0111[0], c[2 * k] += c0212[0], c[3 * k] += c0313[0];
-  c[1] += c0010[1], c[k + 1] += c0111[1], c[2 * k + 1] += c0212[1], c[3 * k + 1] += c0313[1];
-  c[2] += c2030[0], c[k + 2] += c2131[0], c[2 * k + 2] += c2232[0], c[3 * k + 2] += c2333[0];
-  c[3] += c2030[1], c[k + 3] += c2131[1], c[2 * k + 3] += c2232[1], c[3 * k + 3] += c2333[1];
+  c[0] += c0010[0], c[size] += c0111[0], c[2 * size] += c0212[0], c[3 * size] += c0313[0];
+  c[1] += c0010[1], c[size + 1] += c0111[1], c[2 * size + 1] += c0212[1], c[3 * size + 1] += c0313[1];
+  c[2] += c2030[0], c[size + 2] += c2131[0], c[2 * size + 2] += c2232[0], c[3 * size + 2] += c2333[0];
+  c[3] += c2030[1], c[size + 3] += c2131[1], c[2 * size + 3] += c2232[1], c[3 * size + 3] += c2333[1];
 }
- 
+
+void PackMatrixA( int k, double *a, int lda, double *a_to )
+{
+  int j;
+
+  for( j=0; j<k; j++){  /* loop over columns of A */
+    double *a_ij_pntr = &a[j * lda];
+
+    *a_to++ = *a_ij_pntr;
+    *a_to++ = *(a_ij_pntr+1);
+    *a_to++ = *(a_ij_pntr+2);
+    *a_to++ = *(a_ij_pntr+3);
+  }
+}
+
 void square_dgemm (int n, double* A, double* B, double* C)
 {
   int n4 = n;
@@ -115,11 +134,29 @@ void square_dgemm (int n, double* A, double* B, double* C)
     memcpy(newC + i * n4, C + i * n, n * sizeof(double));
   }
 
-  for (int j = 0; j < n4; j += 4)
-    for (int i = 0; i < n4; i += 4) 
+  int kc = 32, mc = 64;
+  int xb, yb;
+
+  for (int x = 0; x < n4; x += kc)
+  {
+    xb = n4 - x < kc ? n4 - x : kc;
+    if (xb % 4 != 0)
+      xb = xb - xb % 4 + 4;
+    for (int y = 0; y < n4; y += mc)
     {
-      add_dot_products(n4, &newA[i], &newB[j * n4], &newC[i + j * n4]);
+      yb = n4 - y < mc ? n4 - y : mc;
+      if (yb % 4 != 0)
+        yb = yb - yb % 4 + 4;
+      double packedA[ yb * xb ];
+      for (int j = 0; j < n4; j += 4)
+        for (int i = 0; i < yb; i += 4) 
+        {
+          if (j == 0) PackMatrixA(xb, &newA[i + y + x * n4], n4, &packedA[ i*xb ] );
+          add_dot_products(xb, n4, &packedA[ i*xb ], &newB[x + j * n4], &newC[i + y + j * n4]);
+        }
+
     }
+  }
 
   for (int i = 0; i < n; i++) {
     memcpy(C + i * n, newC + i * n4, n * sizeof(double));
