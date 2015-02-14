@@ -5,7 +5,7 @@
 
 #define min(a,b) (((a)<(b))?(a):(b))
 
-const char* dgemm_desc = "tutorial based dgemm.";
+const char* dgemm_desc = "final version for hw1";
 
 void add_dot_1x4(int, int, double*, double*, double*);
 
@@ -56,10 +56,10 @@ void add_dot_4x4(int lda, int stride, double* A, double* B, double* C)
     c7 = _mm_add_pd(c7, _mm_mul_pd(a23, b3));
   }
 
-  C[0] += c0[0]; C[1] += c0[1]; //c00, c10
-  C[lda] += c1[0]; C[1+lda] += c1[1]; //c01,c11
-  C[2*lda] += c2[0]; C[1+2*lda] += c2[1]; //c02,c12
-  C[3*lda] += c3[0]; C[1+3*lda] += c3[1]; //c03,c13
+  C[0] += c0[0]; C[1] += c0[1];
+  C[lda] += c1[0]; C[1+lda] += c1[1];
+  C[2*lda] += c2[0]; C[1+2*lda] += c2[1];
+  C[3*lda] += c3[0]; C[1+3*lda] += c3[1];
 
   C[2] += c4[0]; C[3] += c4[1];
   C[2+lda] += c5[0]; C[3+lda] += c5[1];
@@ -68,21 +68,6 @@ void add_dot_4x4(int lda, int stride, double* A, double* B, double* C)
 
 }
 
-
-void packB (int lda, int stride, double* B, double* myB)
-{
-  double *b0pntr = &B[0]; 
-  double *b1pntr = &B[lda]; 
-  double *b2pntr = &B[2*lda]; 
-  double *b3pntr = &B[3*lda];
-  for (int i=0; i<stride; i++)
-  {
-    *myB++ = *b0pntr++;
-    *myB++ = *b1pntr++;
-    *myB++ = *b2pntr++;
-    *myB++ = *b3pntr++;
-  }
-}
 
 void packA (int lda, int stride, double* A, double* myA)
 {
